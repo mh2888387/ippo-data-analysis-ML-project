@@ -8,7 +8,10 @@ This project is now fully notebook-based for Google Colab.
 ## Where to find model accuracies
 - Run the ML section in `ipp_waste.ipynb`.
 - Check the `metrics_df` output table.
-- Accuracy is provided in the `Accuracy_%_(R2)` column.
+- Accuracy is provided for both targets:
+  - `Accuracy_الجوده`
+  - `Accuracy_الفني`
+  - `Accuracy_Mean` (average of both)
 - The same metrics are exported to: `outputs/model_metrics.csv`.
 
 ## Usage
