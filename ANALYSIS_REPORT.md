@@ -1,43 +1,63 @@
-# IPPO Waste Analysis – Reviewed & Upgraded Deliverable
+# IPPO Waste Analysis + Machine Learning Deliverable
 
-This project now includes a **reproducible analysis pipeline** (not only a narrative summary) so the company can re-run preprocessing and analytics on every new monthly file.
+This project now includes a complete technical workflow for:
+1. Data preprocessing and KPI analysis.
+2. Machine learning model training and comparison to predict waste (`بالكيلو`).
 
-## What was missing before (now fixed)
-- Analysis was mostly notebook-only and hard to re-run consistently.
-- Preprocessing logic was not packaged as a reusable workflow.
-- No automatic export of clean datasets + KPI summary tables.
+## 1) Data preprocessing and analysis completed
+The pipeline in `src/waste_analysis_pipeline.py` performs:
+- Raw Excel ingestion for shifted-template source files.
+- Header reconstruction and non-data row removal.
+- Numeric coercion and required-field filtering.
+- Text cleanup for operator/line names.
+- Line name normalization (`سليتر 2` → `سليتر2`, etc.).
+- Per-line IQR outlier removal.
+- Summary outputs by line, operator, and line-operator pair.
 
-## What is now implemented
-1. `src/waste_analysis_pipeline.py`
-   - End-to-end preprocessing from raw Excel structure.
-   - Numeric conversion and null handling.
-   - Text normalization for operator/line fields.
-   - Line-name standardization (e.g., `سليتر 2` -> `سليتر2`).
-   - Outlier removal per line using IQR.
-   - KPI summaries by line/operator/operator-line.
-2. `run_analysis.py`
-   - CLI runner to execute all preprocessing + analysis in one command.
-3. Automatic output artifacts in `outputs/`
-   - `cleaned_data.csv`
-   - `line_summary.csv`
-   - `operator_summary.csv`
-   - `line_operator_summary.csv`
-   - `top_waste_events.csv`
-   - `MANAGEMENT_REPORT.md`
+## 2) Machine learning models implemented
+The module `src/waste_ml_models.py` trains multiple suitable regression models for waste prediction:
+- Linear Regression
+- Ridge Regression
+- Random Forest Regressor
+- Gradient Boosting Regressor
+- Extra Trees Regressor
 
-## How to run
+### Modeling approach
+- Target: `بالكيلو` (waste in kg).
+- Features: numeric process variables (`الوزن`, `فرز تاني`, `محلي`, `تصدير`, `السمك`, `المقاس`) and categorical variables (`الفني`, `خط الانتاج`, `الجوده`, `الورديه`) when available.
+- Preprocessing inside model pipeline:
+  - numeric imputation + scaling
+  - categorical imputation + one-hot encoding
+- Validation:
+  - train/test split metrics: MAE, RMSE, R²
+  - 5-fold CV RMSE mean/std
+- Best model selected by lowest RMSE and exported.
+
+## 3) Commands to run
+### A) Preprocessing + descriptive analysis
 ```bash
 python run_analysis.py --input "<path_to_excel_file>" --out outputs
 ```
 
-Optional: skip IQR outlier filtering
+### B) Train and compare ML models
 ```bash
-python run_analysis.py --input "<path_to_excel_file>" --skip-iqr-outlier-removal
+python run_ml_training.py --input "<path_to_excel_file>" --out outputs
 ```
 
-## Business value for the client
-- The company now has a **repeatable monthly process** for waste analysis.
-- Management receives both:
-  - detailed data outputs for engineers/analysts.
-  - an executive markdown summary for decisions.
-- This removes dependency on manual notebook editing and makes KPI tracking consistent.
+## 4) Client-facing outputs generated
+After running scripts, the company gets:
+- `cleaned_data.csv`
+- `line_summary.csv`
+- `operator_summary.csv`
+- `line_operator_summary.csv`
+- `top_waste_events.csv`
+- `MANAGEMENT_REPORT.md`
+- `model_metrics.csv`
+- `best_waste_model.joblib`
+- `ML_MODEL_REPORT.md`
+
+## 5) Business benefit to company
+- Predict expected waste before execution and flag high-risk conditions.
+- Compare expected vs actual waste to identify process drift.
+- Prioritize maintenance/training on lines and operator-line combinations with recurring high predicted waste.
+- Build a monthly forecasting workflow for material-loss reduction.
